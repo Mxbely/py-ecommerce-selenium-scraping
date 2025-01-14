@@ -1,14 +1,14 @@
-from dataclasses import dataclass, fields, astuple
-from urllib.parse import urljoin
-from selenium import webdriver
 import csv
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
-import requests
-import time
+from dataclasses import astuple, dataclass, fields
+from urllib.parse import urljoin
 
+import requests
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 BASE_URL = "https://webscraper.io/"
 HOME_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/")
@@ -49,21 +49,21 @@ def parse_single_product(product: BeautifulSoup) -> Product:
     )
 
 
-def get_page_products(url):
+def get_page_products(url: str) -> list:
     text = requests.get(url).content
     soup = BeautifulSoup(text, "html.parser")
     products = soup.select(".card-body")
     return [parse_single_product(product) for product in products]
 
 
-def get_more_products(url, driver):
+def get_more_products(url: str, driver: webdriver) -> list:
     driver.get(url)
     more = driver.find_element(By.CLASS_NAME, "ecomerce-items-scroll-more")
     wait = WebDriverWait(driver, 10)
     while True:
         try:
             more = wait.until(
-                EC.element_to_be_clickable(
+                ec.element_to_be_clickable(
                     (By.CLASS_NAME, "ecomerce-items-scroll-more")
                 )
             )
@@ -77,7 +77,7 @@ def get_more_products(url, driver):
                 > previous_count
             )
 
-        except:
+        except NoSuchElementException:
             break
 
     elements = driver.find_elements(By.CLASS_NAME, "card-body")
@@ -88,7 +88,7 @@ def get_more_products(url, driver):
     return [parse_single_product(product) for product in products]
 
 
-def write_to_file(books: list[Product], file_name: str):
+def write_to_file(books: list[Product], file_name: str) -> None:
     with open(f"{file_name}", "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(PRODUCT_FIELDS)
