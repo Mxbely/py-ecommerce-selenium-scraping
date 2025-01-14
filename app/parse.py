@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -78,6 +78,8 @@ def get_more_products(url: str, driver: webdriver) -> list:
             )
 
         except NoSuchElementException:
+            break
+        except TimeoutException:
             break
 
     elements = driver.find_elements(By.CLASS_NAME, "card-body")
